@@ -1,15 +1,21 @@
 package com.backend.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.backend.config.security.UserDetailsImpl;
 import com.backend.entity.pojo.DiscussPost;
+import com.backend.entity.pojo.User;
 import com.backend.mapper.DiscussPostMapper;
 import com.backend.service.DiscussPostService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,7 +37,7 @@ public class DiscussPostServiceImpl implements DiscussPostService {
         if ("latest".equals(sortBy)) {
             queryWrapper.orderByDesc("create_time"); // 按创建时间降序排序
         } else {
-            queryWrapper.orderByDesc("score"); // 按评分降序排序
+            queryWrapper.orderByDesc("(likes + comment_count)"); // 按热度降序排序
         }
 
         // 查询分页数据
@@ -51,7 +57,7 @@ public class DiscussPostServiceImpl implements DiscussPostService {
             item.put("status", post.getStatus());
             item.put("createTime", post.getCreateTime());
             item.put("commentCount", post.getCommentCount());
-            item.put("score", post.getScore());
+            item.put("likes", post.getLikes());
             items.add(item);
         }
 
@@ -60,6 +66,29 @@ public class DiscussPostServiceImpl implements DiscussPostService {
         resp.put("discuss_posts_count", discussPostMapper.selectCount(queryWrapper)); // 查询总数
 
         return resp;
+    }
+
+    @Override
+    public ResponseEntity<String> addDiscussPost(String title, String content) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        UserDetailsImpl loginUser = (UserDetailsImpl) authenticationToken.getPrincipal();
+        User user = loginUser.getUser();
+
+        DiscussPost post = new DiscussPost();
+        post.setUserId(user.getId());
+        post.setTitle(title);
+        post.setContent(content);
+        post.setCreateTime(new Date());
+        post.setStatus(0);
+        post.setType(0);
+        post.setCommentCount(0);
+        post.setLikes(0);
+
+        discussPostMapper.insert(post);
+
+        return ResponseEntity.ok("success");
     }
 
 }

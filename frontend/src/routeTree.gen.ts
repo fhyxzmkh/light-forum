@@ -18,6 +18,7 @@ import { Route as UserSettingsIndexImport } from './routes/user/settings/index'
 import { Route as UserRegisterIndexImport } from './routes/user/register/index'
 import { Route as UserProfileIndexImport } from './routes/user/profile/index'
 import { Route as UserLoginIndexImport } from './routes/user/login/index'
+import { Route as HomeDetailsIndexImport } from './routes/home/details/index'
 
 // Create/Update Routes
 
@@ -63,6 +64,12 @@ const UserLoginIndexRoute = UserLoginIndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const HomeDetailsIndexRoute = HomeDetailsIndexImport.update({
+  id: '/home/details/',
+  path: '/home/details/',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -86,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/message'
       fullPath: '/message'
       preLoaderRoute: typeof MessageIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/home/details/': {
+      id: '/home/details/'
+      path: '/home/details'
+      fullPath: '/home/details'
+      preLoaderRoute: typeof HomeDetailsIndexImport
       parentRoute: typeof rootRoute
     }
     '/user/login/': {
@@ -125,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof HomeIndexRoute
   '/message': typeof MessageIndexRoute
+  '/home/details': typeof HomeDetailsIndexRoute
   '/user/login': typeof UserLoginIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
   '/user/register': typeof UserRegisterIndexRoute
@@ -135,6 +150,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof HomeIndexRoute
   '/message': typeof MessageIndexRoute
+  '/home/details': typeof HomeDetailsIndexRoute
   '/user/login': typeof UserLoginIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
   '/user/register': typeof UserRegisterIndexRoute
@@ -146,6 +162,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/home/': typeof HomeIndexRoute
   '/message/': typeof MessageIndexRoute
+  '/home/details/': typeof HomeDetailsIndexRoute
   '/user/login/': typeof UserLoginIndexRoute
   '/user/profile/': typeof UserProfileIndexRoute
   '/user/register/': typeof UserRegisterIndexRoute
@@ -158,6 +175,7 @@ export interface FileRouteTypes {
     | '/'
     | '/home'
     | '/message'
+    | '/home/details'
     | '/user/login'
     | '/user/profile'
     | '/user/register'
@@ -167,6 +185,7 @@ export interface FileRouteTypes {
     | '/'
     | '/home'
     | '/message'
+    | '/home/details'
     | '/user/login'
     | '/user/profile'
     | '/user/register'
@@ -176,6 +195,7 @@ export interface FileRouteTypes {
     | '/'
     | '/home/'
     | '/message/'
+    | '/home/details/'
     | '/user/login/'
     | '/user/profile/'
     | '/user/register/'
@@ -187,6 +207,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HomeIndexRoute: typeof HomeIndexRoute
   MessageIndexRoute: typeof MessageIndexRoute
+  HomeDetailsIndexRoute: typeof HomeDetailsIndexRoute
   UserLoginIndexRoute: typeof UserLoginIndexRoute
   UserProfileIndexRoute: typeof UserProfileIndexRoute
   UserRegisterIndexRoute: typeof UserRegisterIndexRoute
@@ -197,6 +218,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HomeIndexRoute: HomeIndexRoute,
   MessageIndexRoute: MessageIndexRoute,
+  HomeDetailsIndexRoute: HomeDetailsIndexRoute,
   UserLoginIndexRoute: UserLoginIndexRoute,
   UserProfileIndexRoute: UserProfileIndexRoute,
   UserRegisterIndexRoute: UserRegisterIndexRoute,
@@ -216,6 +238,7 @@ export const routeTree = rootRoute
         "/",
         "/home/",
         "/message/",
+        "/home/details/",
         "/user/login/",
         "/user/profile/",
         "/user/register/",
@@ -230,6 +253,9 @@ export const routeTree = rootRoute
     },
     "/message/": {
       "filePath": "message/index.tsx"
+    },
+    "/home/details/": {
+      "filePath": "home/details/index.tsx"
     },
     "/user/login/": {
       "filePath": "user/login/index.tsx"

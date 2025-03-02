@@ -1,12 +1,13 @@
 package com.backend.controller.discussPost;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.backend.service.DiscussPostService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 public class DiscussPostController {
@@ -20,5 +21,17 @@ public class DiscussPostController {
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(value = "sortBy", defaultValue = "latest") String sortBy) {
         return discussPostService.getDiscussPostList(page, pageSize, sortBy);
+    }
+
+    @PostMapping("/discussPostList/add")
+    public ResponseEntity<String> addDiscussPost(@RequestBody Map<String, String> data) {
+        String title = data.get("title");
+        String content = data.get("content");
+
+        if (StrUtil.isBlank(title) || StrUtil.isBlank(content)) {
+            return ResponseEntity.badRequest().body("Title or content cannot be empty");
+        }
+
+        return discussPostService.addDiscussPost(title, content);
     }
 }

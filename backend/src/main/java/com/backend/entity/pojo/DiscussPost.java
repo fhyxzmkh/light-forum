@@ -17,7 +17,7 @@ public class DiscussPost {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    private String userId;
+    private Integer userId;
 
     private String title;
 
@@ -32,6 +32,6 @@ public class DiscussPost {
 
     private Integer commentCount;
 
-    private Double score;
+    private Integer likes;
 
 }
