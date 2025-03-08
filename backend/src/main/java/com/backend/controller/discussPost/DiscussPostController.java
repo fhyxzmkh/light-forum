@@ -15,7 +15,7 @@ public class DiscussPostController {
     @Autowired
     private DiscussPostService discussPostService;
 
-    @GetMapping("/discussPostList/getList")
+    @GetMapping("/discussPost/getList")
     public JSONObject getDiscussPostList(
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
@@ -23,7 +23,7 @@ public class DiscussPostController {
         return discussPostService.getDiscussPostList(page, pageSize, sortBy);
     }
 
-    @PostMapping("/discussPostList/add")
+    @PostMapping("/discussPost/add")
     public ResponseEntity<String> addDiscussPost(@RequestBody Map<String, String> data) {
         String title = data.get("title");
         String content = data.get("content");
@@ -33,5 +33,18 @@ public class DiscussPostController {
         }
 
         return discussPostService.addDiscussPost(title, content);
+    }
+
+    @GetMapping("/discussPost/details")
+    public ResponseEntity<JSONObject> getPostDetails(@RequestParam Integer postId) {
+        return discussPostService.getPostDetails(postId);
+    }
+
+    @GetMapping("/discussPost/getPostComment")
+    public JSONObject getPostComment(
+            @RequestParam Integer postId,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize) {
+        return discussPostService.getPostComments(postId, page, pageSize);
     }
 }

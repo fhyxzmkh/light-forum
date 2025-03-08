@@ -1,11 +1,18 @@
 package com.backend.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.backend.config.security.UserDetailsImpl;
+import com.backend.entity.dto.DiscussPostDetailsDto;
+import com.backend.entity.pojo.Comment;
 import com.backend.entity.pojo.DiscussPost;
 import com.backend.entity.pojo.User;
+import com.backend.mapper.CommentMapper;
 import com.backend.mapper.DiscussPostMapper;
+import com.backend.mapper.UserMapper;
+import com.backend.service.CommentService;
 import com.backend.service.DiscussPostService;
+import com.backend.utils.SensitiveWordsFilter;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,16 +21,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.backend.entity.constant.CommunityConstant.ENTITY_TYPE_POST;
 
 @Service
 public class DiscussPostServiceImpl implements DiscussPostService {
 
     @Autowired
     private DiscussPostMapper discussPostMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private SensitiveWordsFilter sensitiveWordsFilter;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     @Override
     public JSONObject getDiscussPostList(Integer page, Integer pageSize, String sortBy) {
@@ -69,6 +88,7 @@ public class DiscussPostServiceImpl implements DiscussPostService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<String> addDiscussPost(String title, String content) {
         UsernamePasswordAuthenticationToken authenticationToken =
                 (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -76,10 +96,14 @@ public class DiscussPostServiceImpl implements DiscussPostService {
         UserDetailsImpl loginUser = (UserDetailsImpl) authenticationToken.getPrincipal();
         User user = loginUser.getUser();
 
+        if (StrUtil.isBlank(title) || StrUtil.isBlank(content)) {
+            ResponseEntity.badRequest().body("Title or content is null");
+        }
+
         DiscussPost post = new DiscussPost();
         post.setUserId(user.getId());
-        post.setTitle(title);
-        post.setContent(content);
+        post.setTitle(sensitiveWordsFilter.filter(title));
+        post.setContent(sensitiveWordsFilter.filter(content));
         post.setCreateTime(new Date());
         post.setStatus(0);
         post.setType(0);
@@ -90,5 +114,62 @@ public class DiscussPostServiceImpl implements DiscussPostService {
 
         return ResponseEntity.ok("success");
     }
+
+    @Override
+    public ResponseEntity<JSONObject> getPostDetails(Integer postId) {
+        JSONObject response = new JSONObject();
+
+        if (postId == null) {
+            response.put("error", "Post ID cannot be empty");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        DiscussPost post = discussPostMapper.selectById(postId);
+        User user = userMapper.selectById(post.getUserId());
+
+        DiscussPostDetailsDto discussPostDetailsDto = new DiscussPostDetailsDto();
+        discussPostDetailsDto.setDiscussPost(post);
+        discussPostDetailsDto.setUsername(user.getUsername());
+        discussPostDetailsDto.setAvatar(user.getAvatar());
+        discussPostDetailsDto.setId(user.getId());
+        discussPostDetailsDto.setStatus(user.getStatus());
+        discussPostDetailsDto.setType(user.getType());
+
+        response.put("post", discussPostDetailsDto);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public JSONObject getPostComments(Integer postId, Integer page, Integer pageSize) {
+        IPage<Comment> commentIPage = new Page<>(page, pageSize);
+
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("entity_type", ENTITY_TYPE_POST).eq("entity_id", postId);
+
+        List<Comment> comments = commentMapper.selectPage(commentIPage, queryWrapper).getRecords();
+
+        JSONObject resp = new JSONObject();
+        List<JSONObject> items = new LinkedList<>();
+
+        for (Comment comment : comments) {
+            JSONObject item = new JSONObject();
+            item.put("id", comment.getId());
+            item.put("user_id", comment.getUserId());
+            item.put("user_name", userMapper.selectById(comment.getUserId()).getUsername());
+            item.put("user_avatar", userMapper.selectById(comment.getUserId()).getAvatar());
+            item.put("content", comment.getContent());
+            item.put("status", comment.getStatus());
+            item.put("createTime", comment.getCreateTime());
+            items.add(item);
+        }
+
+        resp.put("post_comments", items);
+        resp.put("post_comments_count", commentMapper.selectCount(queryWrapper)); // 查询总数
+
+        return resp;
+
+    }
+
 
 }

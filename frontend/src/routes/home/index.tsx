@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import useUserStore from "../../store/userStore.ts";
 import axiosInstance from "../../config/axiosConfig.ts";
 import { useEffect, useState } from "react";
@@ -12,6 +12,7 @@ import {
   Form,
   Input,
   FormProps,
+  message,
 } from "antd";
 import type { TabsProps } from "antd";
 import { DiscussPost, DiscussPostResponse } from "../../types/DiscussPost.ts";
@@ -40,6 +41,7 @@ function RouteComponent() {
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"latest" | "hottest">("latest");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   // 获取数据
   const fetchData = async (
@@ -49,7 +51,7 @@ function RouteComponent() {
   ) => {
     try {
       const response = await axiosInstance.get<DiscussPostResponse>(
-        "/discussPostList/getList",
+        "/discussPost/getList",
         {
           params: {
             page: page,
@@ -98,7 +100,28 @@ function RouteComponent() {
   ];
 
   const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
-    console.log("Success:", values);
+    // console.log("Success:", values);
+
+    axiosInstance
+      .post("/discussPost/add", {
+        title: values.title,
+        content: values.content,
+      })
+      .then((response) => {
+        console.log(response);
+        message.info("发布成功");
+        setIsModalOpen(false);
+        fetchData(currentPage, pageSize, activeTab);
+      })
+      .catch((error) => {
+        console.error("Error adding post:", error);
+      });
+  };
+
+  const handleClickPost = (postId: number) => {
+    navigate({
+      to: `/home/details/${postId}`,
+    });
   };
 
   return (
@@ -122,10 +145,15 @@ function RouteComponent() {
             <List
               dataSource={discussPosts}
               renderItem={(post) => (
-                <List.Item key={post.id}>
+                <List.Item
+                  key={post.id}
+                  onClick={() => handleClickPost(post.id)}
+                >
                   <List.Item.Meta
                     title={
-                      <Typography.Text strong>{post.title}</Typography.Text>
+                      <Typography.Text strong className="cursor-pointer">
+                        {post.title}
+                      </Typography.Text>
                     }
                     description={
                       <>

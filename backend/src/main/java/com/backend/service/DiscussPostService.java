@@ -10,4 +10,8 @@ public interface DiscussPostService {
     JSONObject getDiscussPostList(Integer page, Integer pageSize, String sortBy);
 
     ResponseEntity<String> addDiscussPost(String title, String content);
+
+    ResponseEntity<JSONObject> getPostDetails(Integer postId);
+
+    JSONObject getPostComments(Integer postId, Integer page, Integer pageSize);
 }
