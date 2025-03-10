@@ -106,7 +106,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String encodedPassword = passwordEncoder.encode(password);
-        String avatar = "https://api.multiavatar.com/Binx Bond.png";
+        String avatar = "https://cdn.acwing.com/media/user/profile/photo/271661_lg_80d1cf5697.jpg";
 
         User user = new User(null, username, encodedPassword, avatar, 1, 0, new Date());
         userMapper.insert(user);

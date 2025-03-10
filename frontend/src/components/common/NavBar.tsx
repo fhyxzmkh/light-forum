@@ -21,6 +21,7 @@ export const NavBar = () => {
   const logout = useUserStore((state) => state.logout);
   const userAvatar = useUserStore((state) => state.avatar);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(["home"]); // 状态管理选中的菜单项
+  const { username } = useUserStore.getState();
 
   const handleLogout = () => {
     logout();
@@ -140,7 +141,7 @@ export const NavBar = () => {
             <Avatar src={userAvatar} />
           )}
           <Text strong style={{ color: "white" }}>
-            Username
+            {username}
           </Text>
           <CaretDownOutlined style={{ color: "white" }} />
         </div>
