@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Card, Input, Button, message, List, Avatar, Modal } from "antd";
 import { useEffect, useState } from "react";
 
@@ -9,6 +9,7 @@ import {
   DiscussPostComment,
   CommentComment,
 } from "../../../types/DiscussPost.ts";
+import { LikeOutlined, LikeFilled } from "@ant-design/icons";
 
 // 格式化时间
 const formatTime = (time: string | undefined) => {
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/home/details/$postId")({
 
 function RouteComponent() {
   const { postId } = Route.useParams();
+  const navigate = useNavigate();
   const [discussPostDetails, setDiscussPostDetails] =
     useState<DiscussPostDetails>();
   const [commentContent, setCommentContent] = useState("");
@@ -49,6 +51,8 @@ function RouteComponent() {
   const [currentComment, setCurrentComment] =
     useState<DiscussPostComment | null>(null);
   const [subComments, setSubComments] = useState<CommentComment[]>([]);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeStatus, setLikeStatus] = useState(0); // 0-未点赞; 1-已点赞
 
   const fetchComments = (page: number) => {
     axiosInstance
@@ -76,6 +80,56 @@ function RouteComponent() {
     }
   };
 
+  // 获取点赞数量
+  const fetchLikeCount = async () => {
+    try {
+      const response = await axiosInstance.get("/like/entity/count", {
+        params: {
+          entityType: 1, // 1表示帖子
+          entityId: parseInt(postId),
+        },
+      });
+      setLikeCount(response.data);
+    } catch (error) {
+      console.error("获取点赞数量失败:", error);
+    }
+  };
+
+  // 获取点赞状态
+  const fetchLikeStatus = async () => {
+    try {
+      const response = await axiosInstance.get("/like/entity/status", {
+        params: {
+          entityType: 1, // 1表示帖子
+          entityId: parseInt(postId),
+        },
+      });
+      setLikeStatus(response.data);
+    } catch (error) {
+      console.error("获取点赞状态失败:", error);
+    }
+  };
+
+  // 点赞/取消点赞
+  const handleLike = async () => {
+    try {
+      await axiosInstance.post("/like/click", {
+        entityType: 1, // 1表示帖子
+        entityId: parseInt(postId),
+        entityUserId: discussPostDetails?.user_id,
+      });
+
+      // 更新点赞状态和数量
+      fetchLikeStatus();
+      fetchLikeCount();
+
+      message.success(likeStatus === 1 ? "取消点赞成功" : "点赞成功");
+    } catch (error) {
+      console.error("点赞操作失败:", error);
+      message.error("操作失败，请稍后再试");
+    }
+  };
+
   useEffect(() => {
     axiosInstance
       .get(`/discussPost/details?postId=${postId}`)
@@ -90,6 +144,10 @@ function RouteComponent() {
           user_type: data.type,
         };
         setDiscussPostDetails(post);
+
+        // 获取点赞数量和状态
+        fetchLikeCount();
+        fetchLikeStatus();
       });
 
     fetchComments(1);
@@ -162,6 +220,11 @@ function RouteComponent() {
     await fetchSubComments(comment.id);
   };
 
+  const handleUserClick = (userId: number | undefined) => {
+    if (!userId) return;
+    navigate({ to: `/user/profile/${userId}` });
+  };
+
   return (
     <>
       <div className="w-full min-h-screen bg-gray-100 flex">
@@ -173,15 +236,28 @@ function RouteComponent() {
                   {discussPostDetails?.discussPost.title}
                 </h2>
                 <div className="text-gray-500 text-sm mb-4 flex items-center">
-                  <span>
+                  <span
+                    className="mr-4 flex items-center hover:cursor-pointer hover:text-blue-500"
+                    onClick={() => handleUserClick(discussPostDetails?.user_id)}
+                  >
+                    发布人：
+                    {discussPostDetails?.user_name}
+                  </span>
+                  <span className="mx-4 flex items-center">
                     发布时间：
                     {formatTime(discussPostDetails?.discussPost.createTime)}
                   </span>
                   <span className="mx-4 flex items-center">
-                    <span className="mr-1 hover:text-blue-500 cursor-pointer">
-                      👍
-                    </span>
-                    {discussPostDetails?.discussPost.likes}
+                    <Button
+                      type="text"
+                      icon={
+                        likeStatus === 1 ? <LikeFilled /> : <LikeOutlined />
+                      }
+                      onClick={handleLike}
+                      className={likeStatus === 1 ? "text-blue-500" : ""}
+                    >
+                      {likeCount}
+                    </Button>
                   </span>
                   <span className="flex items-center">
                     <span className="mr-1">💬</span>

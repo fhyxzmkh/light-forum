@@ -2,9 +2,7 @@ package com.backend.service;
 
 import org.springframework.http.ResponseEntity;
 
-import java.util.Map;
-
-public interface UserProfileService {
+public interface UserSettingService {
 
     ResponseEntity<String> uploadAvatar(String url);
 

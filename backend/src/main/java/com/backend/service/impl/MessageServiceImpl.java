@@ -10,7 +10,7 @@ import com.backend.entity.pojo.User;
 import com.backend.mapper.MessageMapper;
 import com.backend.mapper.UserMapper;
 import com.backend.service.MessageService;
-import com.backend.utils.GetLoggedUser;
+import com.backend.utils.LoggedUserUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +31,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public JSONObject getMessageList(Integer page, Integer pageSize) {
-        User user = GetLoggedUser.get();
+        User user = LoggedUserUtil.get();
 
         List<Message> messages = messageMapper
                 .selectConversations(user.getId(), (page - 1) * pageSize, pageSize);
@@ -66,7 +66,7 @@ public class MessageServiceImpl implements MessageService {
         if (StrUtil.isBlank(type) || (!type.equals("friend") && !type.equals("system"))) {
             return ResponseEntity.badRequest().build();
         }
-        User user = GetLoggedUser.get();
+        User user = LoggedUserUtil.get();
         if (type.equals("friend")) {
             return ResponseEntity.ok(
                     messageMapper.selectLetterUnreadCount(user.getId(), null)
@@ -120,7 +120,7 @@ public class MessageServiceImpl implements MessageService {
             return ResponseEntity.badRequest().build();
         }
 
-        messageMapper.updateMessageStatus(conversationId, GetLoggedUser.get().getId(), 0, 1);
+        messageMapper.updateMessageStatus(conversationId, LoggedUserUtil.get().getId(), 0, 1);
 
         return ResponseEntity.ok().build();
     }
@@ -136,7 +136,7 @@ public class MessageServiceImpl implements MessageService {
             return ResponseEntity.badRequest().build();
         }
 
-        User fromUser = GetLoggedUser.get();
+        User fromUser = LoggedUserUtil.get();
 
         Message message = new Message();
         message.setContent(content);

@@ -55,6 +55,7 @@ public class UserServiceImpl implements UserService {
         userInfo.setId(user.getId());
         userInfo.setUsername(user.getUsername());
         userInfo.setAvatar(user.getAvatar());
+        userInfo.setCreateTime(user.getCreateTime());
 
         response.put("userInfo", JSON.toJSONString(userInfo));
 
@@ -113,5 +114,23 @@ public class UserServiceImpl implements UserService {
 
         response.put("message", "success");
         return response;
+    }
+
+    @Override
+    public JSONObject getUserProfile(String userId) {
+        User user = userMapper.selectById(userId);
+
+        if (user == null) {
+            return null;
+        }
+
+        JSONObject userInfo = new JSONObject();
+
+        userInfo.put("id", userId);
+        userInfo.put("username", user.getUsername());
+        userInfo.put("avatar", user.getAvatar());
+        userInfo.put("createTime", user.getCreateTime());
+
+        return userInfo;
     }
 }

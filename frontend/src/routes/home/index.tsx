@@ -41,13 +41,36 @@ function RouteComponent() {
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"latest" | "hottest">("latest");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
   const navigate = useNavigate();
+
+  // 获取帖子点赞数
+  const fetchLikeCounts = async (posts: DiscussPost[]) => {
+    try {
+      const likesData: Record<number, number> = {};
+
+      // 为每个帖子获取点赞数
+      for (const post of posts) {
+        const response = await axiosInstance.get("/like/entity/count", {
+          params: {
+            entityType: 1, // 1表示帖子
+            entityId: post.id,
+          },
+        });
+        likesData[post.id] = response.data;
+      }
+
+      setLikeCounts(likesData);
+    } catch (error) {
+      console.error("Error fetching like counts:", error);
+    }
+  };
 
   // 获取数据
   const fetchData = async (
     page: number,
     size: number,
-    sortBy: "latest" | "hottest",
+    sortBy: "latest" | "hottest"
   ) => {
     try {
       const response = await axiosInstance.get<DiscussPostResponse>(
@@ -58,12 +81,15 @@ function RouteComponent() {
             pageSize: size,
             sortBy: sortBy,
           },
-        },
+        }
       );
 
       // console.log(response.data);
       setDiscussPosts(response.data.discuss_posts);
       setTotalPosts(response.data.discuss_posts_count);
+
+      // 获取帖子的点赞数
+      fetchLikeCounts(response.data.discuss_posts);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -166,7 +192,7 @@ function RouteComponent() {
                               {new Date(post.createTime).toLocaleString()}
                             </div>
                             <div>
-                              点赞数: {post.likes} &emsp; 评论数:{" "}
+                              点赞数: {likeCounts[post.id] || 0} &emsp; 评论数:{" "}
                               {post.commentCount}
                             </div>
                           </div>

@@ -10,11 +10,17 @@ import {
   Row,
   Col,
   Divider,
+  Button,
 } from "antd";
-import { UserOutlined, HeartOutlined, TeamOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  HeartOutlined,
+  TeamOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import axiosInstance from "../../../config/axiosConfig.ts";
 
-export const Route = createFileRoute("/user/profile/")({
+export const Route = createFileRoute("/user/profile/$userId")({
   beforeLoad: async () => {
     const { is_login } = useUserStore.getState(); // 获取当前的 is_login 状态
     if (!is_login) {
@@ -25,18 +31,26 @@ export const Route = createFileRoute("/user/profile/")({
 });
 
 function RouteComponent() {
-  const { id, username, avatar, createTime } = useUserStore();
+  const { id } = useUserStore();
+  const { userId } = Route.useParams();
+  const [interviewUser, setInterviewUser] = useState<{
+    id: number;
+    username: string;
+    avatar: string;
+    createTime: string;
+  }>();
   const [activeTab, setActiveTab] = useState<
     "my-profile" | "my-post" | "my-comment"
   >("my-profile");
   const [userLikeCount, setUserLikeCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // 获取用户获得的点赞数
   const fetchUserLikeCount = async () => {
     try {
       const response = await axiosInstance.get("/like/user/count", {
         params: {
-          userId: id,
+          userId: userId,
         },
       });
       setUserLikeCount(response.data);
@@ -45,11 +59,26 @@ function RouteComponent() {
     }
   };
 
+  // 获取访问的用户信息
+  const fetchInterviewUser = async () => {
+    try {
+      const response = await axiosInstance.get("/user/profile", {
+        params: {
+          userId: userId,
+        },
+      });
+      setInterviewUser(response.data);
+    } catch (error) {
+      console.error("获取用户信息失败:", error);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "my-profile") {
       fetchUserLikeCount();
+      fetchInterviewUser();
     }
-  }, [activeTab, id]);
+  }, [activeTab, userId]);
 
   const tabItems: TabsProps["items"] = [
     {
@@ -80,6 +109,12 @@ function RouteComponent() {
     }
   };
 
+  // 处理关注/取消关注按钮点击
+  const handleFollowClick = () => {
+    // 暂时只切换状态，不实现实际逻辑
+    setIsFollowing(!isFollowing);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "my-profile":
@@ -88,14 +123,25 @@ function RouteComponent() {
             <div className="flex flex-col items-center mb-6">
               <Avatar
                 size={100}
-                src={avatar}
+                src={interviewUser?.avatar}
                 icon={<UserOutlined />}
                 className="mb-4"
               />
-              <h2 className="text-2xl font-bold">{username}</h2>
+              <h2 className="text-2xl font-bold">{interviewUser?.username}</h2>
               <p className="text-gray-500">
-                注册时间: {formatTime(createTime)}
+                注册时间: {formatTime(interviewUser?.createTime)}
               </p>
+
+              {parseInt(userId) !== id && (
+                <Button
+                  type={isFollowing ? "default" : "primary"}
+                  icon={<UserAddOutlined />}
+                  className="mt-4"
+                  onClick={handleFollowClick}
+                >
+                  {isFollowing ? "取消关注" : "关注"}
+                </Button>
+              )}
             </div>
 
             <Divider />
@@ -118,9 +164,9 @@ function RouteComponent() {
           </Card>
         );
       case "my-post":
-        return <div className="mt-4">我的帖子内容（待实现）</div>;
+        return <div className="mt-4">Ta的帖子内容（待实现）</div>;
       case "my-comment":
-        return <div className="mt-4">我的评论内容（待实现）</div>;
+        return <div className="mt-4">Ta的评论内容（待实现）</div>;
       default:
         return null;
     }

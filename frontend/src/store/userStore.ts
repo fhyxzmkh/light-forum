@@ -6,6 +6,7 @@ interface UserState {
   token: string;
   avatar: string;
   is_login: boolean;
+  createTime: string;
 }
 
 interface UserStore extends UserState {
@@ -15,6 +16,7 @@ interface UserStore extends UserState {
     token: string,
     avatar: string,
     is_login: boolean,
+    createTime: string,
   ) => void;
   logout: () => void;
   updateUser: (updates: Partial<UserState>) => void;
@@ -27,12 +29,12 @@ const useUserStore = create<UserStore>()((set) => ({
   token: "",
   avatar: "",
   is_login: false,
-
+  createTime: "",
   // Actions
-  login: (id, username, token, avatar, is_login) =>
-    set({ id, username, token, avatar, is_login }),
+  login: (id, username, token, avatar, is_login, createTime) =>
+    set({ id, username, token, avatar, is_login, createTime }),
   logout: () =>
-    set({ id: 0, username: "", token: "", avatar: "", is_login: false }),
+    set({ id: 0, username: "", token: "", avatar: "", is_login: false, createTime: "" }),
   updateUser: (updates) => set((state) => ({ ...state, ...updates })),
 }));
 

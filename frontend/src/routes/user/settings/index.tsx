@@ -23,7 +23,7 @@ function RouteComponent() {
 
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".gif"];
     const isValidExtension = allowedExtensions.some((ext) =>
-      avatarUrl.toLowerCase().endsWith(ext),
+      avatarUrl.toLowerCase().endsWith(ext)
     );
 
     if (!isValidExtension) {
@@ -32,7 +32,7 @@ function RouteComponent() {
     }
 
     try {
-      const response = await axiosInstance.post("/user/profile/uploadAvatar", {
+      const response = await axiosInstance.post("/user/setting/uploadAvatar", {
         avatarUrl,
       });
       if (response.status === 200) {
@@ -58,11 +58,11 @@ function RouteComponent() {
 
     try {
       const response = await axiosInstance.post(
-        "/user/profile/changePassword",
+        "/user/setting/changePassword",
         {
           oldPassword,
           newPassword,
-        },
+        }
       );
       if (response.status === 200) {
         message.success("密码修改成功！");
@@ -138,7 +138,7 @@ function RouteComponent() {
                         return Promise.resolve();
                       }
                       return Promise.reject(
-                        new Error("新密码和确认密码不一致"),
+                        new Error("新密码和确认密码不一致")
                       );
                     },
                   }),

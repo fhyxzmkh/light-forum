@@ -7,7 +7,7 @@ export type DiscussPost = {
   status: number; // '0-正常; 1-精华; 2-拉黑;'
   createTime: string;
   commentCount: number;
-  likes: number;
+  // likes: number;
 };
 
 export type DiscussPostResponse = {

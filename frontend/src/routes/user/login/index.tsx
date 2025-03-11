@@ -34,7 +34,14 @@ function RouteComponent() {
 
         // 将用户信息存储到全局状态中
         const info = JSON.parse(data.userInfo);
-        setUser(info.id, info.username, data.token, info.avatar, true);
+        setUser(
+          info.id,
+          info.username,
+          data.token,
+          info.avatar,
+          true,
+          info.createTime
+        );
 
         // 如果用户勾选了“记住我”，则存储账号和密码
         if (values.remember) {

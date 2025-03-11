@@ -5,7 +5,7 @@ import com.backend.entity.pojo.User;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-public class GetLoggedUser {
+public class LoggedUserUtil {
 
     public static User get() {
 
