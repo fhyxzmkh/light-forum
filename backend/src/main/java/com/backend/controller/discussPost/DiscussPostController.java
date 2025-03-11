@@ -47,4 +47,13 @@ public class DiscussPostController {
             @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize) {
         return discussPostService.getPostComments(postId, page, pageSize);
     }
+
+    @GetMapping("/discussPost/getListByUserId")
+    public JSONObject getDiscussPostListByUserId(
+            @RequestParam Integer userId,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize
+    ) {
+        return discussPostService.getDiscussPostListByUserId(userId, page, pageSize);
+    }
 }

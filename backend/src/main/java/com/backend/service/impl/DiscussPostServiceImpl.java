@@ -171,5 +171,31 @@ public class DiscussPostServiceImpl implements DiscussPostService {
 
     }
 
+    @Override
+    public JSONObject getDiscussPostListByUserId(Integer userId, Integer page, Integer pageSize) {
+        IPage<DiscussPost> recordIPage = new Page<>(page, pageSize);
+
+        QueryWrapper<DiscussPost> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("create_time");
+        List<DiscussPost> posts = discussPostMapper.selectPage(recordIPage, queryWrapper).getRecords();
+
+        JSONObject resp = new JSONObject();
+        List<JSONObject> items = new LinkedList<>();
+
+        for (DiscussPost post : posts) {
+            JSONObject item = new JSONObject();
+            item.put("id", post.getId());
+            item.put("title", post.getTitle());
+            item.put("content", post.getContent());
+            item.put("createTime", post.getCreateTime());
+            items.add(item);
+        }
+
+        resp.put("my_posts", items);
+        resp.put("my_posts_count", discussPostMapper.selectCount(queryWrapper));
+
+        return resp;
+    }
+
 
 }

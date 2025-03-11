@@ -21,7 +21,7 @@ export const NavBar = () => {
   const logout = useUserStore((state) => state.logout);
   const userAvatar = useUserStore((state) => state.avatar);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(["home"]); // 状态管理选中的菜单项
-  const { username } = useUserStore.getState();
+  const { id, username } = useUserStore.getState();
 
   const handleLogout = () => {
     logout();
@@ -33,7 +33,7 @@ export const NavBar = () => {
 
   const handleClickProfile = () => {
     navigate({
-      to: "/user/profile",
+      to: `/user/profile/${id}`,
     });
     setSelectedKeys([]); // 清空高亮状态
   };

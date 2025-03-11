@@ -14,4 +14,6 @@ public interface DiscussPostService {
     ResponseEntity<JSONObject> getPostDetails(Integer postId);
 
     JSONObject getPostComments(Integer postId, Integer page, Integer pageSize);
+
+    JSONObject getDiscussPostListByUserId(Integer userId, Integer page, Integer pageSize);
 }
