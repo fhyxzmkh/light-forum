@@ -14,10 +14,12 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
 import { Route as MessageIndexImport } from './routes/message/index'
 import { Route as HomeIndexImport } from './routes/home/index'
+import { Route as SearchKeywordImport } from './routes/search/$keyword'
 import { Route as UserSettingsIndexImport } from './routes/user/settings/index'
 import { Route as UserRegisterIndexImport } from './routes/user/register/index'
 import { Route as UserLoginIndexImport } from './routes/user/login/index'
 import { Route as UserProfileUserIdImport } from './routes/user/profile/$userId'
+import { Route as MessageNoticeConversationIdImport } from './routes/message/notice/$conversationId'
 import { Route as MessageDetailsConversationIdImport } from './routes/message/details/$conversationId'
 import { Route as HomeDetailsPostIdImport } from './routes/home/details/$postId'
 
@@ -38,6 +40,12 @@ const MessageIndexRoute = MessageIndexImport.update({
 const HomeIndexRoute = HomeIndexImport.update({
   id: '/home/',
   path: '/home/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SearchKeywordRoute = SearchKeywordImport.update({
+  id: '/search/$keyword',
+  path: '/search/$keyword',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -65,6 +73,13 @@ const UserProfileUserIdRoute = UserProfileUserIdImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const MessageNoticeConversationIdRoute =
+  MessageNoticeConversationIdImport.update({
+    id: '/message/notice/$conversationId',
+    path: '/message/notice/$conversationId',
+    getParentRoute: () => rootRoute,
+  } as any)
+
 const MessageDetailsConversationIdRoute =
   MessageDetailsConversationIdImport.update({
     id: '/message/details/$conversationId',
@@ -87,6 +102,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/search/$keyword': {
+      id: '/search/$keyword'
+      path: '/search/$keyword'
+      fullPath: '/search/$keyword'
+      preLoaderRoute: typeof SearchKeywordImport
       parentRoute: typeof rootRoute
     }
     '/home/': {
@@ -115,6 +137,13 @@ declare module '@tanstack/react-router' {
       path: '/message/details/$conversationId'
       fullPath: '/message/details/$conversationId'
       preLoaderRoute: typeof MessageDetailsConversationIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/message/notice/$conversationId': {
+      id: '/message/notice/$conversationId'
+      path: '/message/notice/$conversationId'
+      fullPath: '/message/notice/$conversationId'
+      preLoaderRoute: typeof MessageNoticeConversationIdImport
       parentRoute: typeof rootRoute
     }
     '/user/profile/$userId': {
@@ -152,10 +181,12 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/search/$keyword': typeof SearchKeywordRoute
   '/home': typeof HomeIndexRoute
   '/message': typeof MessageIndexRoute
   '/home/details/$postId': typeof HomeDetailsPostIdRoute
   '/message/details/$conversationId': typeof MessageDetailsConversationIdRoute
+  '/message/notice/$conversationId': typeof MessageNoticeConversationIdRoute
   '/user/profile/$userId': typeof UserProfileUserIdRoute
   '/user/login': typeof UserLoginIndexRoute
   '/user/register': typeof UserRegisterIndexRoute
@@ -164,10 +195,12 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/search/$keyword': typeof SearchKeywordRoute
   '/home': typeof HomeIndexRoute
   '/message': typeof MessageIndexRoute
   '/home/details/$postId': typeof HomeDetailsPostIdRoute
   '/message/details/$conversationId': typeof MessageDetailsConversationIdRoute
+  '/message/notice/$conversationId': typeof MessageNoticeConversationIdRoute
   '/user/profile/$userId': typeof UserProfileUserIdRoute
   '/user/login': typeof UserLoginIndexRoute
   '/user/register': typeof UserRegisterIndexRoute
@@ -177,10 +210,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/search/$keyword': typeof SearchKeywordRoute
   '/home/': typeof HomeIndexRoute
   '/message/': typeof MessageIndexRoute
   '/home/details/$postId': typeof HomeDetailsPostIdRoute
   '/message/details/$conversationId': typeof MessageDetailsConversationIdRoute
+  '/message/notice/$conversationId': typeof MessageNoticeConversationIdRoute
   '/user/profile/$userId': typeof UserProfileUserIdRoute
   '/user/login/': typeof UserLoginIndexRoute
   '/user/register/': typeof UserRegisterIndexRoute
@@ -191,10 +226,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/search/$keyword'
     | '/home'
     | '/message'
     | '/home/details/$postId'
     | '/message/details/$conversationId'
+    | '/message/notice/$conversationId'
     | '/user/profile/$userId'
     | '/user/login'
     | '/user/register'
@@ -202,10 +239,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/search/$keyword'
     | '/home'
     | '/message'
     | '/home/details/$postId'
     | '/message/details/$conversationId'
+    | '/message/notice/$conversationId'
     | '/user/profile/$userId'
     | '/user/login'
     | '/user/register'
@@ -213,10 +252,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/search/$keyword'
     | '/home/'
     | '/message/'
     | '/home/details/$postId'
     | '/message/details/$conversationId'
+    | '/message/notice/$conversationId'
     | '/user/profile/$userId'
     | '/user/login/'
     | '/user/register/'
@@ -226,10 +267,12 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SearchKeywordRoute: typeof SearchKeywordRoute
   HomeIndexRoute: typeof HomeIndexRoute
   MessageIndexRoute: typeof MessageIndexRoute
   HomeDetailsPostIdRoute: typeof HomeDetailsPostIdRoute
   MessageDetailsConversationIdRoute: typeof MessageDetailsConversationIdRoute
+  MessageNoticeConversationIdRoute: typeof MessageNoticeConversationIdRoute
   UserProfileUserIdRoute: typeof UserProfileUserIdRoute
   UserLoginIndexRoute: typeof UserLoginIndexRoute
   UserRegisterIndexRoute: typeof UserRegisterIndexRoute
@@ -238,10 +281,12 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SearchKeywordRoute: SearchKeywordRoute,
   HomeIndexRoute: HomeIndexRoute,
   MessageIndexRoute: MessageIndexRoute,
   HomeDetailsPostIdRoute: HomeDetailsPostIdRoute,
   MessageDetailsConversationIdRoute: MessageDetailsConversationIdRoute,
+  MessageNoticeConversationIdRoute: MessageNoticeConversationIdRoute,
   UserProfileUserIdRoute: UserProfileUserIdRoute,
   UserLoginIndexRoute: UserLoginIndexRoute,
   UserRegisterIndexRoute: UserRegisterIndexRoute,
@@ -259,10 +304,12 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/search/$keyword",
         "/home/",
         "/message/",
         "/home/details/$postId",
         "/message/details/$conversationId",
+        "/message/notice/$conversationId",
         "/user/profile/$userId",
         "/user/login/",
         "/user/register/",
@@ -271,6 +318,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/search/$keyword": {
+      "filePath": "search/$keyword.tsx"
     },
     "/home/": {
       "filePath": "home/index.tsx"
@@ -283,6 +333,9 @@ export const routeTree = rootRoute
     },
     "/message/details/$conversationId": {
       "filePath": "message/details/$conversationId.tsx"
+    },
+    "/message/notice/$conversationId": {
+      "filePath": "message/notice/$conversationId.tsx"
     },
     "/user/profile/$userId": {
       "filePath": "user/profile/$userId.tsx"

@@ -18,7 +18,7 @@ function RouteComponent() {
     try {
       const response = await axios({
         method: "post",
-        url: `http://localhost:9000/api/user/register`,
+        url: `http://localhost:8686/api/user/register`,
         params: {
           username: values.username,
           password: values.password,

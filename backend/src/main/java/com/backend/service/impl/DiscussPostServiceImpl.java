@@ -6,7 +6,9 @@ import com.backend.config.security.UserDetailsImpl;
 import com.backend.entity.dto.DiscussPostDetailsDto;
 import com.backend.entity.pojo.Comment;
 import com.backend.entity.pojo.DiscussPost;
+import com.backend.entity.pojo.Event;
 import com.backend.entity.pojo.User;
+import com.backend.event.EventProducer;
 import com.backend.mapper.CommentMapper;
 import com.backend.mapper.DiscussPostMapper;
 import com.backend.mapper.UserMapper;
@@ -28,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.backend.entity.constant.CommunityConstant.ENTITY_TYPE_POST;
+import static com.backend.entity.constant.CommunityConstant.TOPIC_PUBLISH;
 
 @Service
 public class DiscussPostServiceImpl implements DiscussPostService {
@@ -44,6 +47,9 @@ public class DiscussPostServiceImpl implements DiscussPostService {
     @Autowired
     private CommentMapper commentMapper;
 
+    @Autowired
+    private EventProducer eventProducer;
+
     @Override
     public JSONObject getDiscussPostList(Integer page, Integer pageSize, String sortBy) {
         // 创建分页对象
@@ -56,7 +62,7 @@ public class DiscussPostServiceImpl implements DiscussPostService {
         if ("latest".equals(sortBy)) {
             queryWrapper.orderByDesc("create_time"); // 按创建时间降序排序
         } else {
-            queryWrapper.orderByDesc("(likes + comment_count)"); // 按热度降序排序
+            queryWrapper.orderByDesc("score"); // 按热度降序排序
         }
 
         // 查询分页数据
@@ -76,7 +82,6 @@ public class DiscussPostServiceImpl implements DiscussPostService {
             item.put("status", post.getStatus());
             item.put("createTime", post.getCreateTime());
             item.put("commentCount", post.getCommentCount());
-            item.put("likes", post.getLikes());
             items.add(item);
         }
 
@@ -108,9 +113,17 @@ public class DiscussPostServiceImpl implements DiscussPostService {
         post.setStatus(0);
         post.setType(0);
         post.setCommentCount(0);
-        post.setLikes(0);
+        post.setScore(0);
 
         discussPostMapper.insert(post);
+
+        // 触发发帖事件
+        Event event = new Event();
+        event.setTopic(TOPIC_PUBLISH);
+        event.setUserId(user.getId());
+        event.setEntityType(ENTITY_TYPE_POST);
+        event.setEntityUserId(user.getId());
+        eventProducer.fireEvent(event);
 
         return ResponseEntity.ok("success");
     }

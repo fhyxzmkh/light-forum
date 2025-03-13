@@ -50,4 +50,14 @@ public class MessageController {
         return messageService.sendMessage(toId, content);
     }
 
+    @GetMapping("/message/notice")
+    JSONObject getSystemNotices(
+            @RequestParam("conversationId") String conversationId,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize
+    )
+    {
+        return messageService.getSystemNotices(conversationId, page, pageSize);
+    }
+
 }

@@ -1,9 +1,12 @@
 package com.backend.service.impl;
 
 import com.backend.entity.dto.UserInfoDto;
+import com.backend.entity.pojo.Event;
 import com.backend.entity.pojo.User;
+import com.backend.event.EventProducer;
 import com.backend.mapper.UserMapper;
 import com.backend.service.FollowService;
+import com.backend.utils.LoggedUserUtil;
 import com.backend.utils.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -14,8 +17,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.backend.entity.constant.CommunityConstant.TOPIC_FOLLOW;
+import static com.backend.entity.constant.CommunityConstant.TOPIC_LIKE;
+
 @Service
 public class FollowServiceImpl implements FollowService {
+
+    @Autowired
+    private EventProducer eventProducer;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -25,6 +34,15 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public void follow(int userId, int entityType, int entityId) {
+        Event event = new Event();
+        event.setTopic(TOPIC_FOLLOW);
+        event.setUserId(LoggedUserUtil.get().getId());
+        event.setEntityType(entityType);
+        event.setEntityId(entityId);
+        event.setEntityUserId(entityId);
+
+        eventProducer.fireEvent(event);
+
         stringRedisTemplate.execute(new SessionCallback<>() {
             @Override
             public Object execute(RedisOperations operations) throws DataAccessException {

@@ -1,15 +1,9 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  redirect,
-} from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import {
   Tabs,
   TabsProps,
   Button,
   List,
-  Avatar,
   Pagination,
   Empty,
   Spin,
@@ -18,11 +12,18 @@ import {
   Form,
   Input,
   message,
+  Card,
+  Tag,
 } from "antd";
 import { useEffect, useState } from "react";
 import useUserStore from "../../store/userStore.ts";
 import axiosInstance from "../../config/axiosConfig.ts";
-import { Conversation, MessageListResponse } from "../../types/Message.ts";
+import {
+  Conversation,
+  MessageListResponse,
+  SystemNotice,
+  SystemMessage,
+} from "../../types/Message.ts";
 
 export const Route = createFileRoute("/message/")({
   beforeLoad: async () => {
@@ -51,6 +52,9 @@ function RouteComponent() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [form] = Form.useForm();
 
+  const [systemNotices, setSystemNotices] = useState<SystemNotice[]>([]);
+  const [systemNoticesLoading, setSystemNoticesLoading] = useState(false);
+
   const onTabChange = (key: string) => {
     setActiveTab(key as "friends" | "system");
   };
@@ -69,15 +73,18 @@ function RouteComponent() {
         setUnreadFriendCount(friendResponse.data);
       }
 
-      // 获取系统消息未读数量
-      const systemResponse = await axiosInstance.get(
-        "/message/getUnreadCount",
+      // 获取所有系统消息未读数量
+      const totalUnreadResponse = await axiosInstance.get(
+        "/notice/unread/count",
         {
-          params: { type: "system" },
+          params: {
+            userId: useUserStore.getState().id,
+            topic: "", // 空字符串表示查询所有类型的未读通知
+          },
         }
       );
-      if (systemResponse.data) {
-        setUnreadSystemCount(systemResponse.data);
+      if (totalUnreadResponse.data) {
+        setUnreadSystemCount(totalUnreadResponse.data);
       }
     } catch (error) {
       console.error("获取未读消息数量失败:", error);
@@ -129,7 +136,11 @@ function RouteComponent() {
   useEffect(() => {
     // 获取消息列表
     const fetchData = async () => {
-      await fetchMessageList(activeTab, currentPage, pageSize);
+      if (activeTab === "friends") {
+        await fetchMessageList(activeTab, currentPage, pageSize);
+      } else {
+        await fetchSystemNotices();
+      }
     };
 
     fetchData();
@@ -194,13 +205,151 @@ function RouteComponent() {
     }
   };
 
+  const fetchSystemNotices = async () => {
+    setSystemNoticesLoading(true);
+    try {
+      const topics = ["follow", "like", "comment"];
+      const notices: SystemNotice[] = [];
+
+      for (const topic of topics) {
+        let noticeItem: SystemNotice = {
+          topic: topic,
+          latestMessage: {} as SystemMessage,
+          count: 0,
+          unreadCount: 0,
+        };
+
+        try {
+          // 获取最新通知
+          const latestResponse = await axiosInstance.get("/notice/latest", {
+            params: {
+              userId: useUserStore.getState().id,
+              topic: topic,
+            },
+          });
+
+          if (latestResponse.data) {
+            noticeItem.latestMessage = latestResponse.data;
+          }
+
+          // 获取通知数量
+          const countResponse = await axiosInstance.get("/notice/count", {
+            params: {
+              userId: useUserStore.getState().id,
+              topic: topic,
+            },
+          });
+          noticeItem.count = countResponse.data || 0;
+
+          // 获取未读通知数量
+          const unreadResponse = await axiosInstance.get(
+            "/notice/unread/count",
+            {
+              params: {
+                userId: useUserStore.getState().id,
+                topic: topic,
+              },
+            }
+          );
+          noticeItem.unreadCount = unreadResponse.data || 0;
+        } catch (error) {
+          console.error(`获取${topic}类型的系统消息失败:`, error);
+        }
+
+        notices.push(noticeItem);
+      }
+
+      setSystemNotices(notices);
+    } catch (error) {
+      console.error("获取系统消息失败:", error);
+    } finally {
+      setSystemNoticesLoading(false);
+    }
+  };
+
+  // 辅助函数：获取消息主题对应的标签颜色和文本
+  const getTopicTag = (topic: string) => {
+    switch (topic) {
+      case "follow":
+        return { color: "blue", text: "关注" };
+      case "like":
+        return { color: "red", text: "点赞" };
+      case "comment":
+        return { color: "green", text: "评论" };
+      default:
+        return { color: "default", text: "未知" };
+    }
+  };
+
+  // 解析消息内容
+  const parseNoticeContent = (
+    topic: string,
+    contentStr: string
+  ): { message: string; data: any } => {
+    try {
+      // 尝试解析JSON内容
+      const data = JSON.parse(contentStr);
+      let message = "未知消息";
+
+      switch (topic) {
+        case "follow":
+          message = `编号为 ${data.userId} 的用户关注了你，快来看看吧~`;
+          break;
+        case "like":
+          message = `编号为 ${data.userId} 的用户点赞了你的帖子，快来看看吧~`;
+          break;
+        case "comment":
+          message = `编号为 ${data.userId} 的用户评论了你的帖子，快来看看吧~`;
+          break;
+      }
+
+      return { message, data };
+    } catch (error) {
+      // 如果解析失败，直接返回原始内容
+      console.error("解析消息内容失败:", error);
+      return { message: contentStr, data: null };
+    }
+  };
+
+  // 查看系统消息详情
+  const handleSystemNoticeClick = (topic: string, data: any) => {
+    if (!data) {
+      message.info(`暂无${getTopicTag(topic).text}消息`);
+      return;
+    }
+
+    switch (topic) {
+      case "follow":
+        navigate({
+          to: "/message/notice/$conversationId",
+          params: { conversationId: "follow" },
+        });
+        break;
+      case "like":
+        navigate({
+          to: "/message/notice/$conversationId",
+          params: { conversationId: "like" },
+        });
+        break;
+      case "comment":
+        navigate({
+          to: "/message/notice/$conversationId",
+          params: { conversationId: "comment" },
+        });
+        break;
+      default:
+        message.error(`查看${getTopicTag(topic).text}消息详情功能正在开发中`);
+    }
+  };
+
   return (
     <>
       <div className="w-full min-h-screen bg-gray-100 flex">
         <div className="w-3/5 bg-white mx-auto mt-5">
           <div className="p-4">
-            <div className="flex justify-between items-center">
+            <div className="w-full flex justify-between items-center">
               <Tabs
+                className="min-w-2/3"
                 activeKey={activeTab}
                 items={tabItems}
                 onChange={onTabChange}
@@ -311,7 +460,71 @@ function RouteComponent() {
 
             {activeTab === "system" && (
               <div className="mt-4">
-                <Empty description="暂无系统消息" />
+                <Spin spinning={systemNoticesLoading}>
+                  {systemNotices && systemNotices.length > 0 ? (
+                    <List
+                      itemLayout="vertical"
+                      dataSource={systemNotices}
+                      renderItem={(item) => {
+                        const parsedContent = item.latestMessage
+                          ? parseNoticeContent(
+                              item.topic,
+                              item.latestMessage.content
+                            )
+                          : { message: "当前暂无新消息", data: null };
+
+                        return (
+                          <List.Item
+                            key={item.topic}
+                            className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() =>
+                              handleSystemNoticeClick(
+                                item.topic,
+                                parsedContent.data
+                              )
+                            }
+                          >
+                            <Card className="w-full">
+                              <div className="flex items-start">
+                                <div className="flex-1">
+                                  <div className="flex justify-between">
+                                    <span className="font-medium text-base flex items-center">
+                                      <Tag
+                                        color={getTopicTag(item.topic).color}
+                                      >
+                                        {getTopicTag(item.topic).text}
+                                      </Tag>
+                                      {item.unreadCount > 0 && (
+                                        <Badge
+                                          count={item.unreadCount}
+                                          size="small"
+                                          offset={[5, 0]}
+                                        />
+                                      )}
+                                    </span>
+                                    <span className="text-gray-500 text-sm">
+                                      {item.latestMessage?.createTime || ""}
+                                    </span>
+                                  </div>
+                                  <div className="mt-2 text-gray-700">
+                                    <p>{parsedContent.message}</p>
+                                  </div>
+                                  <div className="mt-2 text-blue-500 text-sm">
+                                    {item.count > 0
+                                      ? `共有 ${item.count} 条${getTopicTag(item.topic).text}消息`
+                                      : `暂无${getTopicTag(item.topic).text}消息`}
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          </List.Item>
+                        );
+                      }}
+                    />
+                  ) : (
+                    <Empty description="暂无系统消息" />
+                  )}
+                </Spin>
               </div>
             )}
           </div>

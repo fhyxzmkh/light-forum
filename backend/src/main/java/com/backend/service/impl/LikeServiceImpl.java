@@ -1,6 +1,8 @@
 package com.backend.service.impl;
 
+import com.backend.entity.pojo.Event;
 import com.backend.entity.pojo.User;
+import com.backend.event.EventProducer;
 import com.backend.service.LikeService;
 import com.backend.utils.LoggedUserUtil;
 import com.backend.utils.RedisKeyUtil;
@@ -11,9 +13,16 @@ import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+
+import static com.backend.entity.constant.CommunityConstant.TOPIC_COMMENT;
+import static com.backend.entity.constant.CommunityConstant.TOPIC_LIKE;
+
 @Service
 public class LikeServiceImpl implements LikeService {
 
+    @Autowired
+    private EventProducer eventProducer;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -33,10 +42,19 @@ public class LikeServiceImpl implements LikeService {
 
                 operations.multi();
 
-                if (Boolean.TRUE.equals(isMember)) {
+                if (Boolean.TRUE.equals(isMember)) { // 已点赞
                     operations.opsForSet().remove(entityLikeKey, String.valueOf(user.getId()));
                     operations.opsForValue().decrement(userLikeKey);
-                } else {
+                } else { // 未点赞
+                    Event event = new Event();
+                    event.setTopic(TOPIC_LIKE);
+                    event.setUserId(user.getId());
+                    event.setEntityType(entityType);
+                    event.setEntityId(entityId);
+                    event.setEntityUserId(entityUserId);
+
+                    eventProducer.fireEvent(event);
+
                     operations.opsForSet().add(entityLikeKey, String.valueOf(user.getId()));
                     operations.opsForValue().increment(userLikeKey);
                 }

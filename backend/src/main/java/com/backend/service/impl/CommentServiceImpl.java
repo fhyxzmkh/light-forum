@@ -5,11 +5,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.backend.config.security.UserDetailsImpl;
 import com.backend.entity.pojo.Comment;
 import com.backend.entity.pojo.DiscussPost;
+import com.backend.entity.pojo.Event;
 import com.backend.entity.pojo.User;
+import com.backend.event.EventProducer;
 import com.backend.mapper.CommentMapper;
 import com.backend.mapper.DiscussPostMapper;
 import com.backend.mapper.UserMapper;
 import com.backend.service.CommentService;
+import com.backend.utils.LoggedUserUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.backend.entity.constant.CommunityConstant.ENTITY_TYPE_COMMENT;
-import static com.backend.entity.constant.CommunityConstant.ENTITY_TYPE_POST;
+import static com.backend.entity.constant.CommunityConstant.*;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -33,8 +35,12 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private CommentMapper commentMapper;
+
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private EventProducer eventProducer;
 
     @Override
     public ResponseEntity<String> addPostComment(String content, Integer entityId) {
@@ -47,11 +53,7 @@ public class CommentServiceImpl implements CommentService {
             return ResponseEntity.badRequest().body("帖子不存在");
         }
 
-        UsernamePasswordAuthenticationToken authenticationToken =
-                (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-
-        UserDetailsImpl loginUser = (UserDetailsImpl) authenticationToken.getPrincipal();
-        User user = loginUser.getUser();
+        User user = LoggedUserUtil.get();
 
         Comment comment = new Comment();
         comment.setUserId(user.getId());
@@ -63,6 +65,17 @@ public class CommentServiceImpl implements CommentService {
         comment.setCreateTime(new Date());
 
         commentMapper.insert(comment);
+
+        // 评论数+1
+        discussPostMapper.PlusPostCommentCount(entityId);
+
+        // 触发发帖事件
+        Event event = new Event();
+        event.setTopic(TOPIC_PUBLISH);
+        event.setUserId(user.getId());
+        event.setEntityType(ENTITY_TYPE_POST);
+        event.setEntityUserId(user.getId());
+        eventProducer.fireEvent(event);
 
         return ResponseEntity.ok().body("评论成功");
     }

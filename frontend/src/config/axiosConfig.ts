@@ -2,7 +2,7 @@ import axios from "axios";
 import useUserStore from "../store/userStore.ts";
 
 const instance = axios.create({
-  baseURL: "http://localhost:9000/api", // 设置基础 URL
+  baseURL: "http://localhost:8686/api", // 设置基础 URL
 });
 
 // 请求拦截器

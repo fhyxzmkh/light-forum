@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class MessageServiceImpl implements MessageService {
@@ -86,23 +87,25 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public JSONObject getMessageDetail(String conversationId, Integer page, Integer pageSize) {
-
-        List<Message> letters = messageMapper.selectLetters(conversationId, (page - 1) * pageSize, pageSize);
+        List<Message> letters = messageMapper.selectLetters(conversationId, (page - 1) * pageSize, pageSize);;
 
         if (letters == null || letters.isEmpty()) {
             return null;
         }
 
         JSONObject resp = new JSONObject();
-        User fromUser = userMapper.selectById(letters.get(0).getFromId());
+
         User toUser = userMapper.selectById(letters.get(0).getToId());
 
         MessageDetailsDto messageDetailsDto = new MessageDetailsDto();
         messageDetailsDto.setMessageList(letters);
 
-        messageDetailsDto.setFromUserId(fromUser.getId());
-        messageDetailsDto.setFromUserName(fromUser.getUsername());
-        messageDetailsDto.setFromUserAvatar(fromUser.getAvatar());
+        User fromUser = userMapper.selectById(letters.get(0).getFromId());
+        if (fromUser != null) {
+            messageDetailsDto.setFromUserId(fromUser.getId());
+            messageDetailsDto.setFromUserName(fromUser.getUsername());
+            messageDetailsDto.setFromUserAvatar(fromUser.getAvatar());
+        }
 
         messageDetailsDto.setToUserId(toUser.getId());
         messageDetailsDto.setToUserName(toUser.getUsername());
@@ -149,6 +152,20 @@ public class MessageServiceImpl implements MessageService {
         messageMapper.insert(message);
 
         return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public JSONObject getSystemNotices(String conversationId, Integer page, Integer pageSize) {
+        List<Message> notices = messageMapper.selectNotices(conversationId, (page - 1) * pageSize, pageSize);;
+
+        if (notices == null || notices.isEmpty()) {
+            return null;
+        }
+
+        JSONObject resp = new JSONObject();
+        resp.put("notices", notices);
+        resp.put("notices_count", notices.size());
+        return resp;
     }
 
 }

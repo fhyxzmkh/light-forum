@@ -25,7 +25,12 @@ public class ServiceLogAspect {
     @Before("pointcut()")
     public void before(JoinPoint joinPoint) {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = attributes.getRequest();
+        HttpServletRequest request = null;
+        if (attributes != null) {
+            request = attributes.getRequest();
+        } else {
+            return;
+        }
 
         String ip = request.getRemoteHost();
         String now = new Date().toString();

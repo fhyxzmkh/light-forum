@@ -1,5 +1,5 @@
 import { useState } from "react"; // 引入 useState
-import { Menu, MenuProps, Dropdown, Avatar, Typography } from "antd";
+import { Menu, MenuProps, Dropdown, Avatar, Typography, message } from "antd";
 import { Header } from "antd/es/layout/layout";
 import {
   UserOutlined,
@@ -22,6 +22,7 @@ export const NavBar = () => {
   const userAvatar = useUserStore((state) => state.avatar);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(["home"]); // 状态管理选中的菜单项
   const { id, username } = useUserStore.getState();
+  const [searchValue, setSearchValue] = useState("");
 
   const handleLogout = () => {
     logout();
@@ -57,6 +58,19 @@ export const NavBar = () => {
       to: "/message",
     });
     setSelectedKeys(["messages"]); // 设置消息为高亮状态
+  };
+
+  const handleSearch = (value: string) => {
+    if (value === "") {
+      message.error("搜索内容不能为空！");
+      return;
+    }
+    // 清空搜索框
+    setSearchValue("");
+
+    navigate({
+      to: `/search/${value}`,
+    });
   };
 
   // 导航栏菜单
@@ -122,7 +136,9 @@ export const NavBar = () => {
       <Search
         placeholder="搜索..."
         style={{ width: 240, margin: "0 16px" }}
-        onSearch={(value) => console.log(value)}
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        onSearch={handleSearch}
       />
 
       {/* 右侧区域：用户头像和用户名（下拉菜单） */}

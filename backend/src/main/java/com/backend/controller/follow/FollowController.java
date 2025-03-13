@@ -1,5 +1,6 @@
 package com.backend.controller.follow;
 
+import com.backend.event.EventProducer;
 import com.backend.service.FollowService;
 import com.backend.utils.LoggedUserUtil;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -36,3 +36,24 @@ export interface MessageDetailsDto {
 export interface MessageDetailsResponse {
   letters: MessageDetailsDto;
 }
+
+export interface SystemMessage {
+  id: number;
+  userId: number;
+  content: string;
+  topic: string; // follow, like, comment
+  createTime: string;
+  status: number; // 0-未读;1-已读
+}
+
+export interface SystemNotice {
+  topic: string;
+  latestMessage: SystemMessage;
+  count: number;
+  unreadCount: number;
+}
+
+export interface SystemNoticeResponse {
+  notices: SystemMessage[];
+  notices_count: number;
+}
